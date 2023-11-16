@@ -2,7 +2,7 @@
 
 char *_ncopy(char *d, char *s, size_t n)
 {
-	if(s)
+	if (s)
 	{
 		while (n)
 		{
@@ -22,7 +22,7 @@ char *_duplicate(char *s)
 
 	if (s)
 	{
-		len = _strlen(s) ;
+		len = _strlen(s);
 		copy = malloc(len + 1);
 		if (copy)
 		{
@@ -52,7 +52,7 @@ char	*_search(char *s, char c)
 	if (s && *s)
 		while (*s++ != c)
 			if (!*s)
-				return 0;
-	return (char *)s;
+				return (0);
+	return ((char *)s);
 }
 

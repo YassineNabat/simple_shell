@@ -123,11 +123,14 @@ int main(int ac, char **av, char **env)
 {
 	while(1){
 	write(1 ,"$ ", 2);
-	char *line = get_line(1);
+	char *line;
 	char **splitted_cmd = split(line, ' ');
 	char *cmd = splitted_cmd[0];
 	char *path = path_of_command(env, cmd);
-	
+	(void)ac;
+	(void)av;
+
+	line = get_line(1);
 	execve(path, splitted_cmd, NULL);
 	
 

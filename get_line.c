@@ -1,18 +1,18 @@
 #include "shell.h"
 
-char *_line_reader(char *all) 
+char *_line_reader(char *all)
 {
 	t_get_line gl;
 
 	gl.newline = _search(all, '\n');
-	if (gl.newline) 
+	if (gl.newline)
 	{
 		gl.len = gl.newline - all;
 		gl.line = malloc(gl.len + 1);
 		if (!gl.line)
 			return (NULL);
 		_ncopy(gl.line, all, gl.len);
-	} 
+	}
 	else
 	{
 		gl.len = _strlen(all);
@@ -81,7 +81,7 @@ char *_file_reader(int fd, char *stc_buffer)
 		buffer[ret] = '\0';
 		stc_buffer = _join(stc_buffer, buffer);
 		if (_search(stc_buffer, '\n'))
-			break ;
+			break;
 	}
 	return (free(buffer), stc_buffer);
 }
@@ -92,7 +92,7 @@ char *get_line(int fd)
 	char *line;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
-		return NULL;
+		return (NULL);
 	reader = _file_reader(fd, reader);
 	if (reader && !*reader)
 	{
