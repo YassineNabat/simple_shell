@@ -86,24 +86,23 @@ int	is_directory(char *command)
 	return (0);
 }
 
-char* access_path(char* command, char** paths) {
-	char* holder;
-	char tmp[1024];
-	struct stat stat_buf; 
-	        
-	int ret;
-
-	while (paths && *paths) {
-		holder = _strjoin(*paths, command); 
-		strcpy(tmp, holder);
-		ret = stat(tmp, &stat_buf); 
-		if (ret != -1 && S_ISREG(stat_buf.st_mode)) { 
-			break; 
+char *access_path(char *command, char **paths)
+{
+	int i;
+	char *path;
+	for (i = 0; paths[i]; i++)
+	{
+		path = malloc(strlen(paths[i]) + strlen(command) + 2);
+		strcpy(path, paths[i]);
+		strcat(path, "/");
+		strcat(path, command);
+		if (access(path, F_OK) == 0)
+		{
+			return path;
 		}
-		free(holder); 
-		paths++;
+		free(path);
 	}
-	return holder; 
+	return NULL;
 }
 
 char	*path_of_command(char *env[], char *command)
