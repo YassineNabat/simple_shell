@@ -1,14 +1,16 @@
 #include "shell.h"
 
-void *_memcpy(void *dst, void *src, size_t n)
+#define BUFFER 1024
+
+void	*_memcpy(void *dst, void *src, size_t n)
 {
-	char *destination;
-	char *source;
+	char	*destination;
+	char	*source;
 
 	destination = (char *)dst;
 	source = (char *)src;
 	if (dst == src)
-		return (dst);
+	return (dst);
 	while (n > 0)
 	{
 		*destination = *source;
@@ -19,12 +21,12 @@ void *_memcpy(void *dst, void *src, size_t n)
 	return (dst);
 }
 
-char *_strjoin(char *s1, char *s2)
+char	*_strjoin(char *s1, char *s2)
 {
-	char *new_str;
-	int size1;
-	int size2;
-	int size;
+	char	*new_str;
+	int	size1;
+	int	size2;
+	int	size;
 
 	size1 = strlen(s1);
 	size2 = strlen(s2);
@@ -41,7 +43,7 @@ char *_strjoin(char *s1, char *s2)
 	return (new_str);
 }
 
-int _strncmp(char *s1, char *s2, size_t n)
+int	_strncmp(char *s1, char *s2, size_t n)
 {
 	size_t	i;
 
@@ -55,7 +57,7 @@ int _strncmp(char *s1, char *s2, size_t n)
 	return (0);
 }
 
-char *search_path(char *env[])
+char	*search_path(char *env[])
 {
 	while (env && *env)
 	{
@@ -66,7 +68,7 @@ char *search_path(char *env[])
 	return (NULL);
 }
 
-char *_strchr(const char *s, int c)
+char	*_strchr(const char *s, int c)
 {
 	while (*s++)
 		if (*s == (char)c)
@@ -76,7 +78,7 @@ char *_strchr(const char *s, int c)
 	return (NULL);
 }
 
-int is_directory(char *command)
+int	is_directory(char *command)
 {
 	if (_strchr(command, '/') != NULL)
 		if (!access(command, X_OK | F_OK))
@@ -84,13 +86,31 @@ int is_directory(char *command)
 	return (0);
 }
 
-char *path_of_command(char *env[], char *command)
-{
-	int i;
-	char *path;
-	char *holder;
-	char **paths;
+char* access_path(char* command, char** paths) {
+	char* holder;
+	char tmp[1024];
+	struct stat stat_buf; 
+	        
+	int ret;
 
+	while (paths && *paths) {
+		holder = _strjoin(*paths, command); 
+		strcpy(tmp, holder);
+		ret = stat(tmp, &stat_buf); 
+		if (ret != -1 && S_ISREG(stat_buf.st_mode)) { 
+			break; 
+		}
+		free(holder); 
+		paths++;
+	}
+	return holder; 
+}
+
+char	*path_of_command(char *env[], char *command)
+{
+	char	*path;
+	char	**paths;
+	char *new;
 	if (is_directory(command))
 		return (command);
 	path = search_path(env);
@@ -99,41 +119,55 @@ char *path_of_command(char *env[], char *command)
 	paths = split((path + 5), ':');
 	if (!paths)
 		return NULL;
-	i = 0;
-	while (paths && paths[i])
-	{
-		holder = _strjoin(paths[i], command);
-		
-		if (access(holder, X_OK | F_OK ) == 0)
-		{
-			i = -1;
-			while (paths[++i])
-				free(paths[i]);
-			free(paths);
-	
-			return (holder);
-		}
-		free(holder);
-		i++;
-	}
+	new = access_path(command, paths);
+	free(paths);
+	if (new)
+		return new;
 	return ( NULL);
+}
+
+char	*read_line()
+{
+	char *buffer;
+	size_t bufsize = 32;
+	size_t characters;
+
+	buffer = (char *)malloc(bufsize * sizeof(char));
+	if (buffer)
+		characters = getline(&buffer,&bufsize,stdin);
+	return buffer;
 }
 
 int main(int ac, char **av, char **env)
 {
-	while(1){
-	write(1 ,"$ ", 2);
-	char *line;
-	char **splitted_cmd = split(line, ' ');
-	char *cmd = splitted_cmd[0];
-	char *path = path_of_command(env, cmd);
-	(void)ac;
-	(void)av;
+	while(1)
+	{
+		write(1 ,"$ ", 2);
+		char *line;
+		char *path;
+		line = read_line();
+		char *p = strchr(line, '\n');
+		if (p) *p = 0; 
+		char **splitted_cmd = split(line, ' ');
+		path = path_of_command(env, splitted_cmd[0]);
+		if (!path)
+			return (printf("error path not found"), 1);
+		splitted_cmd[0] = path; 
+		splitted_cmd[strlen(splitted_cmd[0]) + 1] = NULL;
 
-	line = get_line(1);
-	execve(path, splitted_cmd, NULL);
-	
-
+		pid_t pid = fork();
+		if (pid < 0) {
+			perror("fork failed");
+			exit(EXIT_FAILURE);
+		}
+		if (pid == 0) { 
+			execve(path, splitted_cmd, env); 
+			perror("execve"); 
+			exit(EXIT_FAILURE);
+		} else { 
+			int status;
+			waitpid(pid, &status, 0);
+		}
 	}
 	return 0;
 }
